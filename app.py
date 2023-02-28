@@ -198,7 +198,7 @@ def createFriendship(uid1, uid2):
 
 @app.route("/search", methods=['GET'])
 def	getUsers():
-	return render_template('search.html')
+	return render_template('userlist.html', name=flask_login.current_user.id, message="Here's a list of all users", users=getAllUsers())
 
 @app.route("/friendlist", methods=['GET'])
 def displayList():
@@ -208,6 +208,11 @@ def displayList():
 def getFriendList(uid1):
 	cursor = conn.cursor()
 	cursor.execute("SELECT * FROM Friends WHERE uid1 = {0}".format(uid1))
+	return cursor.fetchall()
+
+def getAllUsers():
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM Users")
 	return cursor.fetchall()
 #end handling friendships code
 
@@ -225,7 +230,7 @@ def addActivityScore(uid):
 
 def getTopTenUsers():
 	cursor = conn.cursor()
-	cursor.execute("SELECT TOP 10 u_score FROM Users")
+	cursor.execute("SELECT TOP 10 u_score FROM Users ORDER BY u_score DESC")
 	return cursor.fetchall()
 #end user activity code
 
@@ -247,10 +252,9 @@ def album():
 
 app.route('/deletepicture', methods=['POST'])
 @flask_login.login_required
-def deletePicture():
-	img = request.get_data()
+def deletePicture(img_data):
 	cursor = conn.cursor()
-	cursor.execute("DELETE FROM Pictures WHERE imgdata = {0}".format)
+	cursor.execute("DELETE FROM Pictures WHERE imgdata = {0}".format(img_data))
 	conn.commit()
 	return
 
