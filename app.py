@@ -182,6 +182,7 @@ def upload_file():
 		cursor = conn.cursor()
 		cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
 		conn.commit()
+		addActivityScore(uid)
 		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	#The method is GET so we return a  HTML form to upload the a photo.
 	else:
@@ -192,37 +193,81 @@ def upload_file():
 def createFriendship(uid1, uid2):
 	cursor = conn.cursor()
 	cursor.execute("INSERT INTO Friendship (UID1, UID2)  VALUES %s, %s", uid1, uid2)
+	conn.commit()
 	return
 
 @app.route("/search", methods=['GET'])
 def	getUsers():
 	return render_template('search.html')
 
-@app.route("/friendlist", methos=['GET'])
+@app.route("/friendlist", methods=['GET'])
 def displayList():
 	uid = getUserIdFromEmail(flask_login.current_user.id)
 	return render_template('friendList.html', name=flask_login.current_user.id, message="Here's your friends list", friends=getFriendList(uid))
 
 def getFriendList(uid1):
 	cursor = conn.cursor()
-	cursor.execute("SELECT * FROM Friends WHERE uid1 = %s", uid1)
+	cursor.execute("SELECT * FROM Friends WHERE uid1 = {0}".format(uid1))
 	return cursor.fetchall()
 #end handling friendships code
 
 #code for user activity
 def addActivityScore(uid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT COUNT(user_id) FROM Pictures WHERE user_id = %s", uid)
+	cursor.execute("SELECT COUNT(user_id) FROM Pictures WHERE user_id = {0}".format(uid))
 	numPhotos = cursor.fetchall()
-	cursor.execute("SELECT COUNT(user_id) FROM Comments WHERE user_id = %s", uid)
+	cursor.execute("SELECT COUNT(user_id) FROM Comments WHERE user_id = {0}".format(uid))
 	numComments = cursor.fetchall()
 	score = numPhotos + numComments
-	return score
+	cursor.execute("UPDATE Users SET u_score = {0} WHERE uid = {1}".format(score, uid))
+	conn.commit()
+	return uid, score
 
 def getTopTenUsers():
+	cursor = conn.cursor()
+	cursor.execute("SELECT TOP 10 u_score FROM Users")
+	return cursor.fetchall()
+#end user activity code
+
+#Album and Photo code
+def getAllPhotos():
+	cursor = conn.cursor()
+	cursor.execute("SELECT imgdata, picture_id, caption FROM Pictures")
+	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
+
+app.route('/album', method=['POST'])
+@flask_login.login_required
+def album():
+	name = request.form.get('name')
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	cursor = conn.cursor()
+	cursor.execute('''INSERT INTO Albums (name, uid) VALUES (%s, %s )''', (name, uid))
+	conn.commit()
+	return render_template('hello.html', name=flask_login.current_user.id, message='Album created!')
+
+app.route('/deletepicture', methods=['POST'])
+@flask_login.login_required
+def deletePicture():
+	img = request.get_data()
+	cursor = conn.cursor()
+	cursor.execute("DELETE FROM Pictures WHERE imgdata = {0}".format)
+	conn.commit()
 	return
 
-#end user activity code
+app.route('/deletealbum', methods=['POST'])
+@flask_login.login_required
+def deleteAlbum():
+	name = request.form.get('name')
+	cursor = conn.cursor()
+	cursor.execute("DELETE FROM Albums WHERE name = {0}".format(name))
+	cursor.execute("DELETE FROM Pictures WHERE album_id = (SELECT album_id FROM Albums WHERE name = {0})".format(name))
+	conn.commit()
+	return
+#end Album and Photo code
+
+#Tag management code
+
+#end Tag management code
 
 
 #default page
@@ -230,7 +275,8 @@ def getTopTenUsers():
 def hello():
 	#display all photos on homepage
 	#display the top 10 users
-	return render_template('hello.html', message='Welcome to Photoshare')
+	getTopTenUsers()
+	return render_template('hello.html', message='Welcome to Photoshare', allPhotos=getAllPhotos())
 
 
 if __name__ == "__main__":
