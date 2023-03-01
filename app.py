@@ -190,9 +190,12 @@ def upload_file():
 #end photo uploading code
 
 #code for handling friendships
-def createFriendship(uid1, uid2):
+@app.route('/addfriend', methods=['POST'])
+def createFriendship():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	uid2 = request.form.get('uid2')
 	cursor = conn.cursor()
-	cursor.execute("INSERT INTO Friendship (UID1, UID2)  VALUES %s, %s", uid1, uid2)
+	cursor.execute("INSERT INTO Friendship (UID1, UID2)  VALUES %s, %s", uid, uid2)
 	conn.commit()
 	return
 
@@ -205,18 +208,17 @@ def displayList():
 	uid = getUserIdFromEmail(flask_login.current_user.id)
 	return render_template('friendList.html', name=flask_login.current_user.id, message="Here's your friends list", friends=getFriendList(uid))
 
-def getFriendList(uid1):
+def getFriendList():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
 	cursor = conn.cursor()
-	cursor.execute("SELECT * FROM Friends WHERE uid1 = {0}".format(uid1))
+	cursor.execute("SELECT * FROM Friendship WHERE uid1 = {0}".format(uid))
 	return cursor.fetchall()
 
 def getAllUsers():
 	cursor = conn.cursor()
 	cursor.execute("SELECT * FROM Users")
 	return cursor.fetchall()
-#end handling friendships code
 
-#code for user activity
 def addActivityScore(uid):
 	cursor = conn.cursor()
 	cursor.execute("SELECT COUNT(user_id) FROM Pictures WHERE user_id = {0}".format(uid))
@@ -226,18 +228,18 @@ def addActivityScore(uid):
 	score = numPhotos + numComments
 	cursor.execute("UPDATE Users SET u_score = {0} WHERE uid = {1}".format(score, uid))
 	conn.commit()
-	return uid, score
+	return
 
 def getTopTenUsers():
 	cursor = conn.cursor()
 	cursor.execute("SELECT TOP 10 u_score FROM Users ORDER BY u_score DESC")
 	return cursor.fetchall()
-#end user activity code
+#end handling friendships code
 
 #Album and Photo code
 def getAllPhotos():
 	cursor = conn.cursor()
-	cursor.execute("SELECT imgdata, picture_id, caption FROM Pictures")
+	cursor.execute("SELECT * FROM Pictures")
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
 app.route('/album', method=['POST'])
@@ -253,9 +255,11 @@ def album():
 app.route('/deletepicture', methods=['POST'])
 @flask_login.login_required
 def deletePicture(img_data):
+	uid = getUserIdFromEmail(flask_login.current_user.id)
 	cursor = conn.cursor()
 	cursor.execute("DELETE FROM Pictures WHERE imgdata = {0}".format(img_data))
 	conn.commit()
+	addActivityScore(uid)
 	return
 
 app.route('/deletealbum', methods=['POST'])
@@ -263,15 +267,85 @@ app.route('/deletealbum', methods=['POST'])
 def deleteAlbum():
 	name = request.form.get('name')
 	cursor = conn.cursor()
-	cursor.execute("DELETE FROM Albums WHERE name = {0}".format(name))
 	cursor.execute("DELETE FROM Pictures WHERE album_id = (SELECT album_id FROM Albums WHERE name = {0})".format(name))
+	cursor.execute("DELETE FROM Albums WHERE name = {0}".format(name))
 	conn.commit()
 	return
 #end Album and Photo code
 
 #Tag management code
+app.route('/selftag', methods=['GET'])
+@flask_login.login_required
+def getMyTags():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	name = request.form.get('name')
+	cursor = conn.cursor()
+	cursor.execute("SELECT imgdata FROM Picture WHERE picture_id = (SELECT picture_id FROM Tags (INNER JOIN Tagged ON Tagged.user_id = Tags.user_id) WHERE name = {0}) AND user_id = {1}".format(name, uid))
+	photos = cursor.fetchall()
+	return render_template('tag.html', name=flask_login.current_user.id, message='Self tagged photos!', photos1=photos)
 
+app.route('/publictag', methods=['GET'])
+@flask_login.login_required
+def getMyTags():
+	name = request.form.get('name')
+	cursor = conn.cursor()
+	cursor.execute("SELECT imgdata FROM Pictures WHERE picure_id = (SELECT Picture_id FROM INNER JOIN Tags ON Tagged.tag_id = Tags.tag_id WHERE name = {0})".format(name))
+	photos = cursor.fetchall()
+	return render_template('tag.html', name=flask_login.current_user.id, message='All tagged photos!', photo2=photos)
+
+app.route('/populartag', methods=['GET'])
+@flask_login.login_required
+def getPopularTags():
+	cursor = conn.cursor()
+	cursor.execute("SELECT COUNT(name) FROM Tags ORDER BY name DESC LIMIT 3")
+	return cursor.fetchall()
+
+app.route('/searchphotos', methods=['GET'])
+def photoSeach():
+	tags = request.form.get('tags')
+	tags = tags.split(" ")
+	cursor = conn.cursor()
+	photos = cursor.execute("SELECT imgdata FROM INNER JOIN Picture ON Picture.picture_id = (SELECT picture_id FROM INNER JOIN Tags ON Tagged.tag_id = Tags.tagi_id WHERE name in {0})".format(tags))
+	return render_template('searcphotos.html', name=flask_login.current_user.id, message='Searched tagged photos!', photo3=photos)
 #end Tag management code
+
+#Comments code
+def addComment():
+	comment = request.form.get('comment')
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO Comments (text) VALUES (%s)", comment)
+	conn.commit()
+	if flask.current_user.is_authenticated:
+		uid = getUserIdFromEmail(flask_login.current_user.id)
+		addActivityScore(uid)
+	return
+
+def like():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO Likes (user_id) VALUES (%s)", uid)
+	conn.commit()
+	return
+
+app.route('/displaylikes', methods=['GET'])
+def displaylikes():
+	cursor = conn.cursor()
+	cursor.execute("SELECT COUNT(user_id) FROM Likes")
+	numLikes = cursor.fetchall()
+	cursor.execute("SELECT user_id FROM Likes")
+	users = cursor.fetchall()
+	return render_template('displaylikes.html', name=flask_login.current_user.id, message='Likes info!', likesCount=numLikes, users=users)
+
+def searchComments():
+	comment = request.form.get('comment')
+	cursor = conn.cursor()
+	cursor.execute("SELECT fname, lname FROM Users (INNER JOIN Comments ON Comments.user_id = Users.user_id) WHERE Comments.text = {0}".format(comment))
+	cursor.fetchall()
+	return
+
+#Recommendations code
+
+#end Recommendations code
 
 
 #default page
@@ -279,8 +353,7 @@ def deleteAlbum():
 def hello():
 	#display all photos on homepage
 	#display the top 10 users
-	getTopTenUsers()
-	return render_template('hello.html', message='Welcome to Photoshare', allPhotos=getAllPhotos())
+	return render_template('hello.html', message='Welcome to Photoshare', topTen = getTopTenUsers(), allPhotos=getAllPhotos())
 
 
 if __name__ == "__main__":
