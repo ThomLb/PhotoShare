@@ -298,8 +298,8 @@ app.route('/populartag', methods=['GET'])
 @flask_login.login_required
 def getPopularTags():
 	cursor = conn.cursor()
-	cursor.execute("SELECT COUNT(name) FROM Tags ORDER BY name DESC LIMIT 3")
-	return cursor.fetchall()
+	pop = cursor.execute("SELECT COUNT(name) FROM Tags ORDER BY name DESC LIMIT 3")
+	return render_template('tag.html', name=flask_login.current_user.id, message='Most popular tags!', popTags=pop)
 
 app.route('/searchphotos', methods=['GET'])
 def photoSeach():
