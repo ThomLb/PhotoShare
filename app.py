@@ -254,20 +254,21 @@ def album():
 
 app.route('/deletepicture', methods=['POST'])
 @flask_login.login_required
-def deletePicture(img_data):
+def deletePicture():
 	uid = getUserIdFromEmail(flask_login.current_user.id)
+	img_data = request.form.get('data')
 	cursor = conn.cursor()
 	cursor.execute("DELETE FROM Pictures WHERE imgdata = {0}".format(img_data))
 	conn.commit()
 	addActivityScore(uid)
-	return
+	return render_template('hello.html', name=flask_login.current_user.id, message='Picture deleted!')
 
 app.route('/deletealbum', methods=['POST'])
 @flask_login.login_required
 def deleteAlbum():
 	name = request.form.get('name')
 	cursor = conn.cursor()
-	cursor.execute("DELETE FROM Pictures WHERE album_id = (SELECT album_id FROM Albums WHERE name = {0})".format(name))
+	cursor.execute("DELETE FROM Pictures FROM FULL JOIN Albums ON Pictures.album_id = Albums.album_id WHERE name = {0}".format(name))
 	cursor.execute("DELETE FROM Albums WHERE name = {0}".format(name))
 	conn.commit()
 	return
@@ -280,7 +281,7 @@ def getMyTags():
 	uid = getUserIdFromEmail(flask_login.current_user.id)
 	name = request.form.get('name')
 	cursor = conn.cursor()
-	cursor.execute("SELECT imgdata FROM Picture WHERE picture_id = (SELECT picture_id FROM Tags (INNER JOIN Tagged ON Tagged.user_id = Tags.user_id) WHERE name = {0}) AND user_id = {1}".format(name, uid))
+	cursor.execute("SELECT imgdata FROM Picture WHERE user_id = {1} AND picture_id IN (SELECT picture_id FROM (Tags FULL JOIN Tagged ON Tags.tag_id = Tagged.tag_id) WHERE name = {0})".format(name, uid))
 	photos = cursor.fetchall()
 	return render_template('tag.html', name=flask_login.current_user.id, message='Self tagged photos!', photos1=photos)
 
@@ -289,7 +290,7 @@ app.route('/publictag', methods=['GET'])
 def getMyTags():
 	name = request.form.get('name')
 	cursor = conn.cursor()
-	cursor.execute("SELECT imgdata FROM Pictures WHERE picure_id = (SELECT Picture_id FROM INNER JOIN Tags ON Tagged.tag_id = Tags.tag_id WHERE name = {0})".format(name))
+	cursor.execute("SELECT imgdata FROM Pictures WHERE picure_id IN (SELECT Picture_id FROM Tagged FULL JOIN Tags ON Tags.tag_id = Tagged.tag_id WHERE name = {0})".format(name))
 	photos = cursor.fetchall()
 	return render_template('tag.html', name=flask_login.current_user.id, message='All tagged photos!', photo2=photos)
 
@@ -305,7 +306,7 @@ def photoSeach():
 	tags = request.form.get('tags')
 	tags = tags.split(" ")
 	cursor = conn.cursor()
-	photos = cursor.execute("SELECT imgdata FROM INNER JOIN Picture ON Picture.picture_id = (SELECT picture_id FROM INNER JOIN Tags ON Tagged.tag_id = Tags.tagi_id WHERE name in {0})".format(tags))
+	photos = cursor.execute("SELECT imgdata FROM Picture LEFT JOIN Tagged ON Picture.picture_id IN (SELECT picture_id FROM (Tagged FULL JOIN Tags ON Tagged.tag_id = Tags.tagi_id) WHERE name in {0})".format(tags))
 	return render_template('searcphotos.html', name=flask_login.current_user.id, message='Searched tagged photos!', photo3=photos)
 #end Tag management code
 
@@ -334,17 +335,32 @@ def displaylikes():
 	numLikes = cursor.fetchall()
 	cursor.execute("SELECT user_id FROM Likes")
 	users = cursor.fetchall()
-	return render_template('displaylikes.html', name=flask_login.current_user.id, message='Likes info!', likesCount=numLikes, users=users)
+	return render_template('displaylikes.html', message='Likes info!', likesCount=numLikes, users=users)
 
 def searchComments():
 	comment = request.form.get('comment')
 	cursor = conn.cursor()
-	cursor.execute("SELECT fname, lname FROM Users (INNER JOIN Comments ON Comments.user_id = Users.user_id) WHERE Comments.text = {0}".format(comment))
-	cursor.fetchall()
-	return
+	cursor.execute("SELECT fname, lname FROM Users INNER JOIN Comments ON Users.user_id = Comments.user_id WHERE Comments.text = {0}".format(comment))
+	comments = cursor.fetchall()
+	return render_template('comment.html', message='Comment searched!', results=comments)
 
 #Recommendations code
+app.route('/recs', methods=['GET'])
+def recommendation():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	cursor = conn.cursor()
+	cursor.execute("SELECT uid2 FROM Friendships WHERE uid1 = {0} AND uid2 = (SELECT uid2 WHERE uid1 = (SELECT uid2 WHERE uid1 = {0}))".format(uid))
+	recs = cursor.fetchall()
+	return render_template('recs.html', message='Your recs!', recommendations=recs)
 
+@app.route('/maylike', methods=['GET'])
+def mayLike():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	cursor = conn.cursor()
+	cursor.execute("SELECT TOP 3 name FROM Tags INNER JOIN Tagged ON Tags.tag_id = Tagged.tag_id WHERE picture_id FROM Tagged = (SELECT picture_id FROM Pictures WHERE user_id = {0}) ORDERY BY name DESC".format(uid))
+	tags = cursor.fetchall()
+	
+	return
 #end Recommendations code
 
 
