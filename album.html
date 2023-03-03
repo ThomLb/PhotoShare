@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+{% if message %}
+  <h4>{{message}}!</h4>
+{% endif %}
+<html>
+<body>
+
+<ul>
+    <li><a href='/'>Home</a></li>
+    <li> <a href='/profile'>Profile</a></li>
+    <li><a href='/search'>Search Users</a></li>
+    <li><a href='/yourphotos'>Your Photos</a></li>
+    <li><a href='/friendlist'>Your Friends</a></li>
+    <li><a href='/albumnames'>Your Albums</a></li>
+    <li><a href='/upload'>Upload a photo</a> </li>
+    <li><a href='/logout'>Logout</a></li>
+</ul>
+
+<h1>Your Albums</h1>
+
+{% if albums %}
+<h2>Here are your albums</h2>
+    <ul>
+    {% for album in albums %}
+        {{album[0]}} 
+        <form action="/deletealbum" method="post">
+            <input type="hidden" name="deletealbum" value="{{album[1]}}">
+            <input type="submit" value="Delete">
+          </form>
+  
+        <br>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+
+</body>
+</html>

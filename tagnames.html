@@ -1,0 +1,23 @@
+<!doctype html>
+{% if message %}
+  <h4>{{message}}!</h4>
+{% endif %}
+
+<ul>
+  <li><a href='/'>Home</a></li>
+  <li><a href='/search'>Search Users</a></li>
+  <li><a href='/yourphotos'>Your Photos</a></li>
+  <li><a href='/friendlist'>Your Friends</a></li>
+  <li><a href='/albumnames'>Your Albums</a></li>
+  <li><a href='/upload'>Upload a photo</a> </li>
+  <li><a href='/logout'>Logout</a></li>
+  </ul>
+
+
+{% if tagsToList %}
+    {% for tag in tagsToList %} 
+        <li>
+            {{tag[0]}}
+        </li>
+    {% endfor %}
+{% endif %}

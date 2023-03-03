@@ -1,0 +1,61 @@
+<!doctype html>
+{% if message %}
+  <h4>{{message}}</h4>
+{% endif %}
+
+
+
+<ul>
+  <li><a href='/'>Home</a></li>
+  <li><a href='/search'>Search Users</a></li>
+  <li><a href='/yourphotos'>Your Photos</a></li>
+  <li><a href='/friendlist'>Your Friends</a></li>
+  <li><a href='/albumnames'>Your Albums</a></li>
+  <li><a href='/upload'>Upload a photo</a> </li>
+  <li><a href='/logout'>Logout</a></li>
+  </ul>
+
+{% if allPhotos %}
+<h2>Your photos</h2>
+    <ul>
+    {% for photo in allPhotos %}
+
+        <li>{{photo[2]}}<br>
+        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/>
+
+
+
+        <form action="/deletepicture" method="post">
+          <input type="hidden" name="deletepicture" value="{{photo[0]}}">
+          <input type="submit" value="Delete Picture">
+        </form>
+
+        <form action="/album" method="post">
+          <input type="search" name="album" placeholder="Album Name">
+          <button type="submit">Add to Album</button>
+        </form> 
+
+        <form action="/addtags" method="post">
+          <input type="search" name="addtag" placeholder="Tag name">
+          <input type="hidden" name="photoTagged" value="{{photo[1]}}">
+          <button type="submit">Add Tag</button>
+        </form> 
+<!-- 
+        <form action="/selftag" method="get">
+          <input type="search" name="selftag" placeholder="Tag name">
+          <button type="submit">Search your photos by tag name</button>
+        </form> 
+
+        <form action="/publictag" method="get">
+          <input type="search" name="pubtag" placeholder="Tag name">
+          <button type="submit">Search all photos by tag name</button>
+        </form>  -->
+
+      <br>
+  
+      </li></ul>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+
