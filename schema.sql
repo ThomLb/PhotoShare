@@ -1,7 +1,6 @@
-DROP DATABASE photoshare;
+DROP DATABASE IF EXISTS photoshare;
 CREATE DATABASE IF NOT EXISTS photoshare;
 USE photoshare;
-
 
 
 CREATE TABLE Users (
