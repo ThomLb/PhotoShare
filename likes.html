@@ -15,7 +15,7 @@
 
 
 {% if likesCount %}
-  <h4>Photo has {{likesCount}} likes!</h4>
+  <h4>Photo has {{likesCount[0]}} likes!</h4>
 {% endif %}
 
 {% if users %}
@@ -28,6 +28,8 @@
     {% endfor %}
     </ul>
 
+{%else%}
+<p>No likes, you should <a href='/addlike'>like!</a></p>
 {% endif %}
 
 {% if users2 %}
@@ -40,7 +42,4 @@
     {% endfor %}
     </ul>  
 
-{%else%}
-
-<p>No likes, you should <a href='/addlike'>like!</a></p>
 {% endif %}

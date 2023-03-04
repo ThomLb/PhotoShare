@@ -167,7 +167,7 @@ def isEmailUnique(email):
 @flask_login.login_required
 def protected():
 	uid = getUserIdFromEmail(flask_login.current_user.id)
-	return render_template('user.html', name=flask_login.current_user.id, message="Here's your profile", score=addActivityScore(uid))
+	return render_template('user.html', name=flask_login.current_user.id, message="Here's your profile", score=getActivityScore(uid))
 
 #begin photo uploading code
 # photos uploaded using base64 encoding so they can be directly embeded in HTML
@@ -223,18 +223,22 @@ def getAllUsers():
 	cursor.execute("SELECT fname, lname, user_id, email FROM Users WHERE user_id <> '{0}'".format(uid))
 	return cursor.fetchall()
 
-def addActivityScore(uid):
+def getActivityScore(uid):
 	cursor = conn.cursor()
-	numPhotos = cursor.execute("SELECT COUNT(picture_id) FROM Pictures WHERE user_id = {0}".format(uid))
-	numComments = cursor.execute("SELECT COUNT(text) FROM Comments WHERE user_id = {0}".format(uid))
+	cursor.execute("SELECT COUNT(user_id) FROM Pictures WHERE user_id = {0}".format(uid))
+	numPhotos = cursor.fetchall()
+	numPhotos = int(''.join(map(str, numPhotos[0])))	
+	cursor.execute("SELECT COUNT(user_id) FROM Comments WHERE user_id = {0}".format(uid))
+	numComments = cursor.fetchall()
+	numComments = int(''.join(map(str, numComments[0])))
 	score = numPhotos + numComments
-	cursor.execute("UPDATE Users SET u_score = {0} WHERE user_id = {1}".format(score, uid))
+	cursor.execute("UPDATE Users SET u_score = '{0}' WHERE user_id = '{1}'".format(score, uid))
 	conn.commit()
 	return score
 
 def getTopTenUsers():
 	cursor = conn.cursor()
-	cursor.execute("SELECT email FROM Users ORDER BY u_score DESC LIMIT 3")
+	cursor.execute("SELECT fname, lname FROM Users ORDER BY u_score DESC LIMIT 3")
 	return cursor.fetchall()
 #end handling friendships code
 
@@ -347,23 +351,21 @@ def addComment():
 	cursor = conn.cursor()
 	cursor.execute("INSERT INTO Comments (text, user_id, picture_id) VALUES (%s, %s, %s)", (comment, uid, picID))
 	conn.commit()
-	# if flask_login.confirm_login:
-	# 	addActivityScore()
 	return render_template('hello.html', message='Comment added!', comment=comment, photos=getAllPhotos(), base64=base64)
 
 @app.route('/addlike', methods=['POST'])
 @flask_login.login_required
 def like():
-	photoID = request.form.get('photo')
+	photoID = request.form.get('pic')
 	uid = getUserIdFromEmail(flask_login.current_user.id)
 	cursor = conn.cursor()
 	cursor.execute("INSERT INTO Likes (user_id, picture_id) VALUES (%s, %s)", (uid, photoID))
 	conn.commit()
-	return
+	return render_template('hello.html', photos=getAllPhotos(), base64=base64)
 
-@app.route('/displaylikes', methods=['GET'])
+@app.route('/displaylikes', methods=['POST'])
 def displaylikes():
-	pic_id = request.forms.get('pic')
+	pic_id = request.form.get('pic')
 	cursor = conn.cursor()
 	cursor.execute("SELECT COUNT(user_id) FROM Likes WHERE picture_id = {0}".format(pic_id))
 	numLikes = cursor.fetchall()
