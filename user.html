@@ -7,6 +7,57 @@
   <h1>Hello {{ name }}!</h1>
 {% endif %}
 
+<ul>
+  <li><a href='/'>Home</a></li>
+  <li><a href='/search'>Search Users</a></li>
+  <li><a href='/yourphotos'>Your Photos</a></li>
+  <li><a href='/friendlist'>Your Friends</a></li>
+  <li><a href='/albumnames'>Your Albums</a></li>
+  <li><a href='/upload'>Upload a photo</a> </li>
+  <li><a href='/logout'>Logout</a></li>
+  </ul>
+
+{% if score %}
+  <h2>You have a contribution score of: {{ score }}!</h2>
+{% endif %}
+
+<form action="/recommendation" method="post">
+  <input type="submit" name="recs" value="Show friend recommendations">
+</form>
+
+<br>
+</br>
+
+<form action="/maylike" method="post">
+  <input type="submit" name="maylike" value="Show photos you make like">
+</form>
+
+{% if recs %}
+<h2>Here are your recommended friends</h2>
+    <ul>
+    {% for friend in recs %}
+
+        <li>{{friend[0]}}<br>
+
+    {% endfor %}
+    </ul>
+{% endif %}
+
+{% if lis %}
+    {{lis}}
+{% endif %}
+
+{% if mayLike %}
+<h2>We think you may like these photos!</h2>
+    <ul>
+    {% for photo in mayLike %}
+        <li>{{photo[2]}}<br>
+          <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+
+    {% endfor %}
+    </ul>
+{% endif %}
+
 {% if photos %}
 <h2>Here are your photos</h2>
     <ul>
@@ -19,40 +70,5 @@
     </ul>
 {% endif %}
 
-<!-- {% if message is none %}
-  <p>You should <a href='/login'>login!</a></p>
-{% else %}
-  <p> Go to <a href='/profile'>profile?</a></p>
-{% endif %} -->
-
-<ul>
-<li><a href='/'>Home</a></li>
-<li><a href='/search'>Search Users</a></li>
-<li><a href='/yourphotos'>Your Photos</a></li>
-<li><a href='/friendlist'>Your Friends</a></li>
-<li><a href='/albumnames'>Your Albums</a></li>
-<li><a href='/upload'>Upload a photo</a> </li>
-<li><a href='/logout'>Logout</a></li>
-</ul>
-
-<!-- <form>
-    <input type="search" placeholder="Search Users">
-    <button type="submit">Search</button>
-</form> -->
 
 
-<!-- search bar right align
-<div class="search">
-  <form action="#">
-      <input type="text"
-          placeholder="Search Users"
-          name="search">
-      <button>
-          <i class="fa fa-search"
-              style="height:200px;width:200px">
-          </i>
-          
-      </button>
-  </form>
-</div>
-</div> -->

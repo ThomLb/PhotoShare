@@ -11,13 +11,18 @@
   <li><a href='/albumnames'>Your Albums</a></li>
   <li><a href='/upload'>Upload a photo</a> </li>
   <li><a href='/logout'>Logout</a></li>
-  </ul>
+</ul>
 
 
-{% if tagsToList %}
-    {% for tag in tagsToList %} 
+{% if allTags %}
+<h2>All tags</h2>
+    <ul>
+    {% for tag in allTags %} 
         <li>
-            {{tag[0]}}
+          <br>
+          {{tag[0]}} 
+          </br>
         </li>
     {% endfor %}
+    </ul>
 {% endif %}

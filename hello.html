@@ -1,5 +1,4 @@
 <!-- author ben lawson (balawson@bu.edu) -->
-
 <!doctype html>
 {% if message %}
   <h4>{{message}}!</h4>
@@ -9,55 +8,95 @@
   <h1>Hello {{ name }}!</h1>
 {% endif %}
 
+{% if message is none %}
+  <p>You should <a href='/login'>login!</a></p>
+{% else %}
+  <p> Go to <a href='/profile'>profile?</a></p>
+{% endif %}
+
+<ul>
+  <li><a href='/'>Home</a></li>
+  <li><a href='/search'>Search Users</a></li>
+  <li><a href='/yourphotos'>Your Photos</a></li>
+  <li><a href='/friendlist'>Your Friends</a></li>
+  <li><a href='/albumnames'>Your Albums</a></li>
+  <li><a href='/upload'>Upload a photo</a> </li>
+  <li><a href='/logout'>Logout</a></li>
+</ul>
+
+{% if popTags %}
+<h2>Here are the 3 most popular tags!</h2>
+    <ul>
+    {% for tag in popTags %}
+      <ul>
+      {{tag[0]}}
+    </ul>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+{% if topThree %}
+<h2>Here are the 3 most contributing users!</h2>
+    <ul>
+    {% for user in topThree %}
+      <ul>
+      {{user}}
+    </ul>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+<h3>Search for a user by comment</h3>
+<form action="/searchcomment" method="post">
+  <input type="search" name="comment" placeholder="comment">
+  <button type="submit">Search for all users under this comment</button>
+</form> 
+
+<h3>View all photos by tag name, like this 'tag name'</h3>
+<form action="/publictag" method="post">
+  <input type="search" name="public" placeholder="'Tag name'">
+  <button type="submit">View all photos by tag</button>
+</form> 
+
+<h3>View all photos by multiple tag names, like this 'tag name1', 'tag name2'</h3>
+<form action="/searchphotos" method="post">
+  <input type="search" name="conjuctive" placeholder="'Tag name1', 'tag name2'">
+  <button type="submit">View all photos by tag</button>
+</form> 
+
 {% if photos %}
-<h2>Here are your photos</h2>
+<h2>Here are all photos</h2>
     <ul>
     {% for photo in photos %}
 
         <li>{{photo[2]}}<br>
         <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+
+        {% if comment %}
+          <h3>{{ comment }}</h3>
+        {% endif %}        
+        
+        <h3>Add comment</h3>
+        <form action="/addcomment" method="post">
+          <input type="hidden" name="pic" value="{{photo[1]}}">
+          <input type="search" name="comment" placeholder="Comment">
+          <button type="submit">Add Comment</button>
+        </form> 
+
+        <h3>Like photo</h3>
+        <form action="/addlike" method="post">
+          <input type="hidden" name="pic" value="{{photo[1]}}">
+          <button type="submit">Like</button>
+        </form> 
+
+        <h3>Display likes</h3>
+        <form action="/displaylikes" method="post">
+          <input type="hidden" name="pic" value="{{photo[1]}}">
+          <button type="submit">See likes</button>
+        </form> 
+
     {% endfor %}
     </ul>
 {% endif %}
 
-{% if message is none %}
-  <p>You should <a href='/login'>login!</a></p>
-{% else %}
-  <li> <a href='/profile'>Profile</a></li>
-{% endif %}
 
-<ul>
-<!-- <li><a href='/upload'>Upload a photo</a> </li> -->
-<!-- <li><a href='/logout'>Logout</a></li> -->
-<li><a href='/'>Home</a></li>
-<!-- <li><a href='/browse'>Browse Photos</a></li> -->
-<li><a href='/logout'>Logout</a></li>
-</ul>
-
-{% if allPhotos %}
-<h2>Here are all photos</h2>
-    <ul>
-    {% for photo in allPhotos %}
-
-        <li>{{photo[2]}}<br>
-        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
-    {% endfor %}
-    </ul>
-{% endif %}
-
-
-
-<!-- search bar right align
-<div class="search">
-  <form action="action_page.php">
-      <input type="text"
-          placeholder="Search Users"
-          name="search">
-      <button>
-          <i class="fa fa-search"
-              style="font-size: 18px;">
-          </i>
-      </button>
-  </form>
-</div>
-</div> -->

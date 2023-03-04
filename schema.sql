@@ -1,14 +1,7 @@
 DROP DATABASE photoshare;
 CREATE DATABASE IF NOT EXISTS photoshare;
 USE photoshare;
--- DROP TABLE IF EXISTS Pictures CASCADE;
--- DROP TABLE IF EXISTS Users CASCADE;
--- DROP TABLE IF EXISTS Albums CASCADE;
--- DROP TABLE IF EXISTS Comments CASCADE;
--- DROP TABLE IF EXISTS Likes CASCADE;
--- DROP TABLE IF EXISTS Tags CASCADE;
--- DROP TABLE IF EXISTS Tagged CASCADE;
--- DROP TABLE IF EXISTS Friendship CASCADE;
+
 
 
 CREATE TABLE Users (
@@ -72,16 +65,18 @@ CREATE TABLE Likes(
 CREATE TABLE Tags(
   tag_id int4 AUTO_INCREMENT,
   tag_name varchar(100),
-  CONSTRAINT tag_pk PRIMARY KEY (tag_id)
+  picture_id int4,
+  CONSTRAINT tag_pk PRIMARY KEY (tag_id),
+  FOREIGN KEY(picture_id) REFERENCES Pictures(picture_id) ON DELETE CASCADE
 );
 
-CREATE TABLE Tagged(
-  picture_id int4,
-  tag_id int4,
-  CONSTRAINT tagged_pk PRIMARY KEY (picture_id, tag_id),
-  FOREIGN KEY(picture_id) REFERENCES Pictures(picture_id),
-  FOREIGN KEY(tag_id) REFERENCES Tags(tag_id)
-);
+-- CREATE TABLE Tagged(
+--   picture_id int4 NOT NULL,
+--   tag_id int4 NOT NULL,
+--   CONSTRAINT tagged_pk PRIMARY KEY (picture_id, tag_id),
+--   FOREIGN KEY(picture_id) REFERENCES Pictures(picture_id),
+--   FOREIGN KEY(tag_id) REFERENCES Tags(tag_id) ON DELETE CASCADE
+-- );
 
 CREATE TABLE Friendship (
     uid1 INT4,

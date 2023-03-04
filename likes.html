@@ -13,21 +13,34 @@
   <li><a href='/logout'>Logout</a></li>
   </ul>
 
-{% if photos %}
-<h2>These are the tagged photos</h2>
+
+{% if likesCount %}
+  <h4>Photo has {{likesCount}} likes!</h4>
+{% endif %}
+
+{% if users %}
+<h2>Likes</h2>
     <ul>
-    {% for photo in photos %}
+    {% for user in users %}
       <ul>
-        {{photo[2]}}
-
-        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/>
-
+        {{user[0]}}
       </ul>
     {% endfor %}
     </ul>
 
-{%else%}
-<p>No photos with that tag, you should <a href='/addtags'>add tags!</a></p>
 {% endif %}
 
+{% if users2 %}
+<h2>Commentors</h2>
+    <ul>
+    {% for user in users %}
+      <ul>
+        {{user[0]}}
+      </ul>
+    {% endfor %}
+    </ul>  
 
+{%else%}
+
+<p>No likes, you should <a href='/addlike'>like!</a></p>
+{% endif %}
