@@ -133,7 +133,7 @@ def register_user():
 	cursor = conn.cursor()
 	test =  isEmailUnique(email)
 	if test:
-		print(cursor.execute("INSERT INTO Users (email, password, fname, lname) VALUES ('{0}', '{1}', '{2}', '{3}')".format(email, password, fname, lname)))
+		print(cursor.execute("INSERT INTO Users (email, password, fname, lname) VALUES ('{0}', '{1}', '{2}', '{3}')".format(email, password, lname, fname)))
 		conn.commit()
 		#log user in
 		user = User()
